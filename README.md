@@ -1,6 +1,6 @@
 # ESPHome [![Discord Chat](https://img.shields.io/discord/429907082951524364.svg)](https://discord.gg/KhAMKrd) [![GitHub release](https://img.shields.io/github/release/esphome/esphome.svg)](https://GitHub.com/esphome/esphome/releases/) [![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/esphome/esphome)
 
-> **Note**: This is a fork of the official ESPHome repository that adds support for the Waveshare 1.54in-b ePaper display. The original can be found at [esphome/esphome](https://github.com/esphome/esphome).
+> **Note**: This is a fork of the official ESPHome repository that adds support for the Waveshare 1.54in-b ePaper display (black and red colors). The original can be found at [esphome/esphome](https://github.com/esphome/esphome).
 
 <a href="https://esphome.io/">
   <picture>
@@ -15,7 +15,7 @@
 
 This repository includes an example configuration for a solar power monitoring display using an ESP8266 and a Waveshare 1.54" ePaper display.
 
-![Solar PV Display Example](https://raw.githubusercontent.com/aattila/esphome/100c0fe73b020402b36336c3cf923f43913c0246/example/solar-pv.png)
+![Solar PV Display Example](https://raw.githubusercontent.com/aattila/esphome/dev/example/solar-pv.jpg)
 
 The example shows real-time solar power data fetched from Home Assistant, displayed on an ePaper screen with low power consumption.
 
