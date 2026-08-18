@@ -1,0 +1,339 @@
+# Board: Generic ESP8266 Board (Generic)
+# Definition: definitions/boards/generic-esp8266/manifest.yaml
+
+esphome:
+  name: eink-display-1
+  friendly_name: eInk Display 1
+  on_boot:
+    then:
+      - script.execute: manage_run_and_sleep
+
+esp8266:
+  board: esp01_1m
+
+logger:
+
+api:
+  encryption:
+    key: "qs3H8cMkpTMPrRvyfTJzR/o7JPCOGwBDSAsAWtUfRNk="
+
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: YOUR_SSID
+  password: YOUR_PASSWORD
+  ap:
+    ssid: TestDisplay Fallback Hotspot
+    password: "12345678"
+
+captive_portal:
+
+
+display:
+  - platform: waveshare_epaper
+    id: epaper_display
+
+    model: 1.54in-b
+    cs_pin: GPIO16
+    dc_pin: GPIO4
+    reset_pin: GPIO2
+    busy_pin:
+      number: GPIO5
+      inverted: true
+
+    update_interval: never
+    rotation: 0
+    lambda: |-
+        const auto COLOR_WHITE = Color(0, 0, 0); // Inverted for e-ink
+        const auto COLOR_BLACK = Color(255, 255, 255); // Inverted for e-ink
+        const auto COLOR_RED = Color(255, 0, 0);
+        auto color_off = COLOR_WHITE;
+        auto color_on = COLOR_BLACK;
+
+        // Helper to print text with word-wrap at widget boundary
+        auto print_wrapped_text = [&](int x, int y, int max_w, int line_h, esphome::font::Font *font, Color color, TextAlign align, const char* text) {
+          if (!text || max_w <= 0) return;
+          int cx = x;
+          int cy = y;
+          std::string line;
+          std::string word;
+          const char* p = text;
+          while (*p) {
+            // SANITIZATION: Treat newlines, carriage returns, and tabs as spaces for flow
+            bool is_space = (*p == ' ' || *p == '\n' || *p == '\r' || *p == '\t');
+            if (is_space) {
+              if (!word.empty()) {
+                int ww, wh, wbl, wx;
+                font->measure(word.c_str(), &ww, &wx, &wbl, &wh);
+                int lw = 0, lx;
+                if (!line.empty()) { font->measure(line.c_str(), &lw, &lx, &wbl, &wh); int sw, sx, sbl, sh; font->measure(" ", &sw, &sx, &sbl, &sh); lw += sw; }
+                if (lw + ww > max_w && !line.empty()) {
+                  it.print(cx, cy, font, color, align, line.c_str());
+                  cy += line_h;
+                  line = word;
+                } else {
+                  if (!line.empty()) line += " ";
+                  line += word;
+                }
+                word.clear();
+              }
+            } else {
+              word += *p;
+            }
+            p++;
+          }
+          if (!word.empty()) {
+            int ww, wh, wbl, wx;
+            font->measure(word.c_str(), &ww, &wx, &wbl, &wh);
+            int lw = 0, lx;
+            if (!line.empty()) { font->measure(line.c_str(), &lw, &lx, &wbl, &wh); int sw, sx, sbl, sh; font->measure(" ", &sw, &sx, &sbl, &sh); lw += sw; }
+            if (lw + ww > max_w && !line.empty()) {
+              it.print(cx, cy, font, color, align, line.c_str());
+              cy += line_h;
+              line = word;
+            } else {
+              if (!line.empty()) line += " ";
+              line += word;
+            }
+          }
+          if (!line.empty()) {
+            it.print(cx, cy, font, color, align, line.c_str());
+          }
+        };
+
+        // Helper to apply a simple grey dither mask for e-paper (checkerboard)
+        auto apply_grey_dither_mask = [&](int x_start, int y_start, int w, int h) {
+          for (int y = y_start; y < y_start + h; y++) {
+            for (int x = x_start; x < x_start + w; x++) {
+              if ((x + y) % 2 == 0) it.draw_pixel_at(x, y, COLOR_WHITE);
+              else it.draw_pixel_at(x, y, COLOR_BLACK);
+            }
+          }
+        };
+
+        // Helper to apply grey dither to text (subtractive - erases every other black pixel)
+        auto apply_grey_dither_to_text = [&](int x_start, int y_start, int w, int h) {
+          for (int y = y_start; y < y_start + h; y++) {
+            for (int x = x_start; x < x_start + w; x++) {
+              if ((x + y) % 2 == 0) it.draw_pixel_at(x, y, COLOR_WHITE);
+            }
+          }
+        };
+        int currentPage = id(display_page);
+
+        if (currentPage == 0) {
+          it.fill(COLOR_WHITE);
+          color_off = COLOR_WHITE;
+          color_on = COLOR_BLACK;
+
+          // ────────────────────────────────────────
+          if (id(sensor_inverter_1_total_pv_power).state < 200) {
+            it.printf(26, 25, id(font_material_design_icons_400_50), COLOR_BLACK, TextAlign::CENTER, "%s", "\U000F0A72");
+            apply_grey_dither_to_text(0, 0, 48, 48);
+          } else {
+            it.printf(26, 25, id(font_material_design_icons_400_50), COLOR_RED, TextAlign::CENTER, "%s", "\U000F0A72");
+          }
+
+          // ────────────────────────────────────────
+          {
+            char val_buf[256];
+            sprintf(val_buf, "%.0f", id(sensor_inverter_1_total_pv_power).state);
+            int wv, hv, xoffv, blv;
+            id(font_roboto_400_36)->measure(val_buf, &wv, &xoffv, &blv, &hv);
+            int wu, hu, xoffu, blu;
+            id(font_roboto_400_14)->measure("W", &wu, &xoffu, &blu, &hu);
+            int value_y = 0;
+            int unit_y = value_y + (hv - hu) / 2;
+            it.printf(67, value_y, id(font_roboto_400_36), color_on, TextAlign::TOP_LEFT, "%s", val_buf);
+            it.printf(67 + wv + 2, unit_y, id(font_roboto_400_20), color_on, TextAlign::TOP_LEFT, "W");
+          }
+
+
+          // ────────────────────────────────────────
+          if (id(sensor_inverter_1_energy_today).state < 2) {
+            it.printf(26, 73, id(font_material_design_icons_400_50), COLOR_BLACK, TextAlign::CENTER, "%s", "\U000F1904");
+            apply_grey_dither_to_text(0, 48, 48, 48);
+          } else {
+            it.printf(26, 73, id(font_material_design_icons_400_50), COLOR_RED, TextAlign::CENTER, "%s", "\U000F1904");
+          }
+          // ────────────────────────────────────────
+          {
+            char val_buf[256];
+            sprintf(val_buf, "%.2f", id(sensor_inverter_1_energy_today).state);
+            int wv, hv, xoffv, blv;
+            id(font_roboto_400_36)->measure(val_buf, &wv, &xoffv, &blv, &hv);
+            int wu, hu, xoffu, blu;
+            id(font_roboto_400_14)->measure("kWh", &wu, &xoffu, &blu, &hu);
+            int value_y = 48;
+            int unit_y = value_y + (hv - hu) / 2;
+            it.printf(67, value_y, id(font_roboto_400_36), color_on, TextAlign::TOP_LEFT, "%s", val_buf);
+            it.printf(67 + wv + 2, unit_y, id(font_roboto_400_20), color_on, TextAlign::TOP_LEFT, "kWh");
+          }
+
+          // ────────────────────────────────────────
+          if (id(switch_mains_switch_0).state == true) {
+            it.printf(26, 125, id(font_material_design_icons_400_42), COLOR_BLACK, TextAlign::CENTER, "%s", "\U000F192C");
+            apply_grey_dither_to_text(0, 104, 44, 44);
+          } else {
+            it.printf(26, 125, id(font_material_design_icons_400_42), COLOR_RED, TextAlign::CENTER, "%s", "\U000F192C");
+          }
+          // ────────────────────────────────────────
+          {
+            char val_buf[256];
+            sprintf(val_buf, "%.0f", id(sensor_inverter_1_grid_power).state);
+            int wv, hv, xoffv, blv;
+            id(font_roboto_400_36)->measure(val_buf, &wv, &xoffv, &blv, &hv);
+            int wu, hu, xoffu, blu;
+            id(font_roboto_400_14)->measure("W", &wu, &xoffu, &blu, &hu);
+            int value_y = 103;
+            int unit_y = value_y + (hv - hu) / 2;
+            if (id(sensor_inverter_1_grid_power).state > 9000) {
+              it.printf(67, value_y, id(font_roboto_400_36), COLOR_RED, TextAlign::TOP_LEFT, "%s", val_buf);
+            } else {
+              it.printf(67, value_y, id(font_roboto_400_36), color_on, TextAlign::TOP_LEFT, "%s", val_buf);
+            }
+            it.printf(67 + wv + 2, unit_y, id(font_roboto_400_20), color_on, TextAlign::TOP_LEFT, "W");
+          }
+
+          // ────────────────────────────────────────
+          if (id(sensor_min_soc).state < 10) {
+            it.printf(26, 178, id(font_material_design_icons_400_45), COLOR_BLACK, TextAlign::CENTER, "%s", "\U000F089D");
+            apply_grey_dither_to_text(0, 155, 48, 48);
+          } else {
+            it.printf(26, 178, id(font_material_design_icons_400_45), COLOR_RED, TextAlign::CENTER, "%s", "\U000F089D");
+          }
+          // ────────────────────────────────────────
+          {
+            char val_buf[256];
+            sprintf(val_buf, "%.2f", id(sensor_min_soc).state);
+            int wv, hv, xoffv, blv;
+            id(font_roboto_400_36)->measure(val_buf, &wv, &xoffv, &blv, &hv);
+            int wu, hu, xoffu, blu;
+            id(font_roboto_400_14)->measure("%%", &wu, &xoffu, &blu, &hu);
+            int value_y = 155;
+            int unit_y = value_y + (hv - hu) / 2;
+            it.printf(67, value_y, id(font_roboto_400_36), color_on, TextAlign::TOP_LEFT, "%s", val_buf);
+            it.printf(67 + wv + 2, unit_y, id(font_roboto_400_20), color_on, TextAlign::TOP_LEFT, "%%");
+          }
+
+          // ────────────────────────────────────────
+          if (id(switch_night_lamp).state == true) {
+            it.filled_circle(187, 13, 8, COLOR_RED);
+          }
+
+        }
+
+spi:
+  clk_pin: GPIO14
+  mosi_pin: GPIO13
+
+globals:
+  - id: display_page
+    type: int
+    restore_value: true
+    initial_value: '0'
+  - id: initial_sensor_sync_pending
+    type: bool
+    restore_value: false
+    initial_value: 'true'
+
+time:
+  - platform: homeassistant
+    id: ha_time
+
+sensor:
+  - platform: homeassistant
+    id: sensor_inverter_1_total_pv_power
+    entity_id: sensor.inverter_1_total_pv_power
+    internal: true
+  - platform: homeassistant
+    id: sensor_inverter_1_energy_today
+    entity_id: sensor.inverter_1_energy_today
+    internal: true
+  - platform: homeassistant
+    id: sensor_inverter_1_grid_power
+    entity_id: sensor.inverter_1_grid_power
+    internal: true
+  - platform: homeassistant
+    id: sensor_min_soc
+    entity_id: sensor.min_soc
+    internal: true
+
+switch:
+  - platform: homeassistant
+    id: switch_night_lamp
+    entity_id: switch.night_lamp
+    internal: true
+  - platform: homeassistant
+    id: switch_mains_switch_0
+    entity_id: switch.mains_switch_0
+    internal: true
+
+font:
+  - file:
+      type: gfonts
+      family: "Roboto"
+      weight: 400
+      italic: false
+    id: font_roboto_400_14
+    size: 14
+    glyphsets: [GF_Latin_Kernel]
+    ignore_missing_glyphs: true
+  - file:
+      type: gfonts
+      family: "Roboto"
+      weight: 400
+      italic: false
+    id: font_roboto_400_36
+    size: 36
+    glyphsets: [GF_Latin_Kernel]
+    ignore_missing_glyphs: true
+  - file:
+      type: gfonts
+      family: "Roboto"
+      weight: 400
+      italic: false
+    id: font_roboto_400_20
+    size: 20
+    glyphsets: [GF_Latin_Kernel]
+    ignore_missing_glyphs: true
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: font_material_design_icons_400_50
+    size: 50
+    glyphs: ["\U000F0A72", "\U000F1904"]
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: font_material_design_icons_400_42
+    size: 42
+    glyphs: ["\U000F192C"]
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: font_material_design_icons_400_45
+    size: 45
+    glyphs: ["\U000F089D"]
+
+script:
+
+  - id: manage_run_and_sleep
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: 'return !(id(ha_time).now().is_valid() && api_is_connected());'
+          then:
+            - logger.log: "Waiting for sync..."
+            - wait_until:
+                condition:
+                  lambda: 'return id(ha_time).now().is_valid() && api_is_connected();'
+                timeout: 120s
+      - if:
+          condition:
+            lambda: 'return id(initial_sensor_sync_pending);'
+          then:
+            - logger.log: "OTA hint: if this build line does not match the YAML header, the device booted a different image or rolled back."
+            - logger.log: "Waiting 5s for initial sensor updates..."
+            - delay: 5s
+            - lambda: 'id(initial_sensor_sync_pending) = false;'
+          
+      - component.update: epaper_display
+      - delay: 180s
+      - script.execute: manage_run_and_sleep

@@ -57,7 +57,7 @@ class WaveshareEPaperBase : public display::DisplayBuffer,
   GPIOPin *reset_pin_{nullptr};
   GPIOPin *dc_pin_;
   GPIOPin *busy_pin_{nullptr};
-  virtual uint32_t idle_timeout_() { return 1000u; }  // NOLINT(readability-identifier-naming)
+  virtual uint32_t idle_timeout_() { return 3000u; }  // NOLINT(readability-identifier-naming)
 };
 
 class WaveshareEPaper : public WaveshareEPaperBase {
@@ -171,7 +171,8 @@ class WaveshareEPaperTypeA : public WaveshareEPaper {
 };
 
 enum WaveshareEPaperTypeBModel {
-  WAVESHARE_EPAPER_2_7_IN = 0,
+  WAVESHARE_EPAPER_1_54_IN_B = 0,
+  WAVESHARE_EPAPER_2_7_IN,
   WAVESHARE_EPAPER_2_7_IN_B,
   WAVESHARE_EPAPER_2_7_IN_B_V2,
   WAVESHARE_EPAPER_4_2_IN,
@@ -211,6 +212,7 @@ class WaveshareEPaper1P54InB : public WaveshareEPaperBWR {
     this->wait_until_idle_();
     // COMMAND POWER OFF
     this->command(0x02);
+    this->wait_until_idle_();
   }
 
  protected:
@@ -221,6 +223,8 @@ class WaveshareEPaper1P54InB : public WaveshareEPaperBWR {
   // On this panel, a pixel with both planes set to "ink" renders black instead of red, so black
   // and red must be kept mutually exclusive here.
   void draw_absolute_pixel_internal(int x, int y, Color color) override;
+  uint32_t idle_timeout_() override;
+
 };
 
 class WaveshareEPaper1P54InBV2 : public WaveshareEPaperBWR {

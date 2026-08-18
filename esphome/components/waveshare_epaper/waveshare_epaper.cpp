@@ -998,6 +998,9 @@ static const uint8_t LUT_RED0_1_54B[] = {0x83, 0x5D, 0x01, 0x81, 0x48, 0x23, 0x7
 static const uint8_t LUT_RED1_1_54B[] = {0x03, 0x1D, 0x01, 0x01, 0x08, 0x23, 0x37, 0x37,
                                           0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
+uint32_t WaveshareEPaper1P54InB::idle_timeout_() { return 100000; }
+
+
 void WaveshareEPaper1P54InB::initialize() {
   this->reset_();
 
@@ -1076,6 +1079,12 @@ void WaveshareEPaper1P54InB::initialize() {
 }
 
 void HOT WaveshareEPaper1P54InB::display() {
+  // Wait for the display to be idle before we start
+  if (!this->wait_until_idle_()) {
+    ESP_LOGE(TAG, "Timeout waiting for display to be idle at start of display!");
+    return;
+  }
+
   uint32_t buf_len_half = this->get_buffer_length_() >> 1;
   this->initialize();
 
@@ -1120,6 +1129,9 @@ void HOT WaveshareEPaper1P54InB::display() {
 }
 int WaveshareEPaper1P54InB::get_height_internal() { return 200; }
 int WaveshareEPaper1P54InB::get_width_internal() { return 200; }
+
+
+
 void HOT WaveshareEPaper1P54InB::draw_absolute_pixel_internal(int x, int y, Color color) {
   if (x >= this->get_width_internal() || y >= this->get_height_internal() || x < 0 || y < 0)
     return;
@@ -1127,7 +1139,10 @@ void HOT WaveshareEPaper1P54InB::draw_absolute_pixel_internal(int x, int y, Colo
   const uint32_t buf_half_len = this->get_buffer_length_() / 2u;
   const uint32_t pos = (x + y * this->get_width_internal()) / 8u;
   const uint8_t subpos = x & 0x07;
+  
   const bool is_red = color.red > 0 && color.green == 0 && color.blue == 0;
+  // Use red buffer when red is dominant (greater than both green and blue)
+  // const bool is_red = color.is_on() && color.red > color.green && color.red > color.blue;
 
   if (color.is_on() && !is_red) {
     this->buffer_[pos] |= 0x80 >> subpos;
