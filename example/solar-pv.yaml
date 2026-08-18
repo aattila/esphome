@@ -221,7 +221,7 @@ display:
           if (id(switch_night_lamp).state == true) {
             it.filled_circle(187, 13, 8, COLOR_RED);
           }
-
+          
         }
 
 spi:
@@ -335,5 +335,8 @@ script:
             - lambda: 'id(initial_sensor_sync_pending) = false;'
           
       - component.update: epaper_display
+      #- delay: 10s
+      - lambda: |-
+          id(epaper_display).deep_sleep();
       - delay: 180s
       - script.execute: manage_run_and_sleep

@@ -1027,7 +1027,7 @@ void WaveshareEPaper1P54InB::initialize() {
 
   // COMMAND VCOM AND DATA INTERVAL SETTING
   this->command(0x50);
-  this->data(0x37);
+  this->data(0x17);
 
   // COMMAND PLL CONTROL
   this->command(0x30);
@@ -1075,7 +1075,7 @@ void WaveshareEPaper1P54InB::initialize() {
   // COMMAND LUT RED1
   this->command(0x27);
   for (uint8_t i : LUT_RED1_1_54B)
-    this->data(i);
+    this->data(i);    
 }
 
 void HOT WaveshareEPaper1P54InB::display() {
