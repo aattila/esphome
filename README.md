@@ -17,6 +17,12 @@ This repository includes an example configuration for a solar power monitoring d
 
 ![Solar PV Display Example](https://raw.githubusercontent.com/aattila/esphome/dev/example/solar-pv.jpg)
 
+
+Wiring schema with NodeMCU (ESP8266)
+
+![Wiring Example](https://raw.githubusercontent.com/aattila/esphome/refs/heads/dev/example/wiring.drawio.png)
+
+
 The example shows real-time solar power data fetched from Home Assistant, displayed on an ePaper screen with low power consumption.
 
 ### Files included:
