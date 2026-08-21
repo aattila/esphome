@@ -1086,7 +1086,7 @@ void HOT WaveshareEPaper1P54InB::display() {
   }
 
   uint32_t buf_len_half = this->get_buffer_length_() >> 1;
-  this->initialize();
+  //this->initialize();
 
   // COMMAND DATA START TRANSMISSION 1 (BLACK)
   // This controller only supports a 2-bit-per-pixel black/white plane, so every source bit

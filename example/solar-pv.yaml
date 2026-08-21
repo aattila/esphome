@@ -35,7 +35,7 @@ display:
     id: epaper_display
 
     model: 1.54in-b
-    cs_pin: GPIO16
+    cs_pin: GPIO12
     dc_pin: GPIO4
     reset_pin: GPIO2
     busy_pin:
@@ -222,6 +222,10 @@ display:
             it.filled_circle(187, 13, 8, COLOR_RED);
           }
           
+          it.filled_rectangle(0, 49, 200, 1, color_on);
+          it.filled_rectangle(0, 99, 200, 1, color_on);
+          it.filled_rectangle(0, 152, 200, 1, color_on);
+          it.filled_rectangle(57, 0, 1, 200, color_on);
         }
 
 spi:
@@ -311,6 +315,12 @@ font:
     size: 45
     glyphs: ["\U000F089D"]
 
+
+
+deep_sleep:
+  run_duration: 60s
+  sleep_duration: 120s
+
 script:
 
   - id: manage_run_and_sleep
@@ -335,8 +345,9 @@ script:
             - lambda: 'id(initial_sensor_sync_pending) = false;'
           
       - component.update: epaper_display
-      #- delay: 10s
+      - delay: 10s
       - lambda: |-
           id(epaper_display).deep_sleep();
-      - delay: 180s
-      - script.execute: manage_run_and_sleep
+
+
+
