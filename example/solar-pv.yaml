@@ -143,7 +143,7 @@ display:
             id(font_roboto_400_36)->measure(val_buf, &wv, &xoffv, &blv, &hv);
             int wu, hu, xoffu, blu;
             id(font_roboto_400_14)->measure("W", &wu, &xoffu, &blu, &hu);
-            int value_y = 0;
+            int value_y = 3;
             int unit_y = value_y + (hv - hu) / 2;
             it.printf(67, value_y, id(font_roboto_400_36), color_on, TextAlign::TOP_LEFT, "%s", val_buf);
             it.printf(67 + wv + 2, unit_y, id(font_roboto_400_20), color_on, TextAlign::TOP_LEFT, "W");
@@ -165,7 +165,7 @@ display:
             id(font_roboto_400_36)->measure(val_buf, &wv, &xoffv, &blv, &hv);
             int wu, hu, xoffu, blu;
             id(font_roboto_400_14)->measure("kWh", &wu, &xoffu, &blu, &hu);
-            int value_y = 48;
+            int value_y = 53;
             int unit_y = value_y + (hv - hu) / 2;
             it.printf(67, value_y, id(font_roboto_400_36), color_on, TextAlign::TOP_LEFT, "%s", val_buf);
             it.printf(67 + wv + 2, unit_y, id(font_roboto_400_20), color_on, TextAlign::TOP_LEFT, "kWh");
@@ -186,7 +186,7 @@ display:
             id(font_roboto_400_36)->measure(val_buf, &wv, &xoffv, &blv, &hv);
             int wu, hu, xoffu, blu;
             id(font_roboto_400_14)->measure("W", &wu, &xoffu, &blu, &hu);
-            int value_y = 103;
+            int value_y = 105;
             int unit_y = value_y + (hv - hu) / 2;
             if (id(sensor_inverter_1_grid_power).state > 9000) {
               it.printf(67, value_y, id(font_roboto_400_36), COLOR_RED, TextAlign::TOP_LEFT, "%s", val_buf);
@@ -198,10 +198,10 @@ display:
 
           // ────────────────────────────────────────
           if (id(sensor_min_soc).state < 10) {
-            it.printf(26, 178, id(font_material_design_icons_400_45), COLOR_BLACK, TextAlign::CENTER, "%s", "\U000F089D");
+            it.printf(26, 176, id(font_material_design_icons_400_42), COLOR_BLACK, TextAlign::CENTER, "%s", "\U000F089D");
             apply_grey_dither_to_text(0, 155, 48, 48);
           } else {
-            it.printf(26, 178, id(font_material_design_icons_400_45), COLOR_RED, TextAlign::CENTER, "%s", "\U000F089D");
+            it.printf(26, 176, id(font_material_design_icons_400_42), COLOR_RED, TextAlign::CENTER, "%s", "\U000F089D");
           }
           // ────────────────────────────────────────
           {
@@ -309,17 +309,13 @@ font:
   - file: "fonts/materialdesignicons-webfont.ttf"
     id: font_material_design_icons_400_42
     size: 42
-    glyphs: ["\U000F192C"]
-  - file: "fonts/materialdesignicons-webfont.ttf"
-    id: font_material_design_icons_400_45
-    size: 45
-    glyphs: ["\U000F089D"]
+    glyphs: ["\U000F089D", "\U000F192C"]
 
 
 
 deep_sleep:
   run_duration: 60s
-  sleep_duration: 120s
+  sleep_duration: 240s
 
 script:
 
